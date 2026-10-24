@@ -9,7 +9,7 @@ import java.util.*;
         @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
         private String title;
-        @Column(length = 3000)
+        @Column(length = 5000)
         private String instructions;
         private String youtubeId;
         private LocalDateTime createdAt = LocalDateTime.now();
