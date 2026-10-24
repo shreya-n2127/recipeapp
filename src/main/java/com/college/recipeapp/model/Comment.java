@@ -4,7 +4,8 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
     @Entity
-    public class Comment {
+    public class
+    Comment {
         @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
         @Column(length = 500)

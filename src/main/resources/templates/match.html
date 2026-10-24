@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>What can I cook?</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .pick { display: inline-block; background: white; border: 2px solid #fed7aa; border-radius: 20px; padding: 6px 14px; margin: 4px; cursor: pointer; }
+        .pick input { margin-right: 6px; }
+        .bar { background: #fed7aa; border-radius: 10px; height: 14px; overflow: hidden; margin: 8px 0; }
+        .bar div { background: #ea580c; height: 100%; }
+        .btn { background: #ea580c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+        .pct { font-size: 22px; font-weight: bold; color: #ea580c; }
+    </style>
+</head>
+<body>
+<header>
+    <h1><a th:href="@{/}" style="margin:0">Recipe App</a></h1>
+    <div>
+        <a th:href="@{/match}">What can I cook?</a>
+        <span sec:authorize="isAuthenticated()">
+            Hi, <b sec:authentication="name"></b>
+            <form th:action="@{/logout}" method="post" style="display:inline; margin-left:14px">
+                <button type="submit">Logout</button>
+            </form>
+        </span>
+        <span sec:authorize="!isAuthenticated()">
+            <a th:href="@{/login}">Login</a> <a th:href="@{/register}">Register</a>
+        </span>
+    </div>
+</header>
+
+<main>
+    <h2>What can I cook?</h2>
+    <p>Tick the ingredients you have at home.</p>
+
+    <form method="get" th:action="@{/match}">
+        <label class="pick" th:each="i : ${ingredients}">
+            <input type="checkbox" name="have" th:value="${i.id}" th:checked="${selected.contains(i.id)}">
+            <span th:text="${i.name}">Ingredient</span>
+        </label>
+        <div><button type="submit" class="btn">Find recipes</button></div>
+    </form>
+
+    <p th:if="${searched and #lists.isEmpty(results)}">No recipes match those ingredients.</p>
+
+    <div class="grid" style="margin-top:20px">
+        <div class="card" th:each="m : ${results}">
+            <span class="pct" th:text="${m.percent} + '%'">0%</span>
+            <div class="bar"><div th:style="'width:' + ${m.percent} + '%'"></div></div>
+            <h3 th:text="${m.recipe.title}">Title</h3>
+            <p class="small" th:text="'You have ' + ${m.have} + ' of ' + ${m.total} + ' ingredients'"></p>
+            <p class="small" th:if="${!m.missing.isEmpty()}" th:text="'Missing: ' + ${#strings.listJoin(m.missing, ', ')}"></p>
+            <p class="small" th:if="${m.missing.isEmpty()}">You have everything!</p>
+            <a th:href="@{/recipe/{id}(id=${m.recipe.id})}">View recipe &rarr;</a>
+        </div>
+    </div>
+</main>
+</body>
+</html>

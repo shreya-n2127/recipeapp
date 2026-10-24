@@ -10,7 +10,9 @@
 <header>
     <h1><a th:href="@{/}" style="margin:0">Recipe App</a></h1>
     <div>
-        <span sec:authorize="isAuthenticated()">
+        <div>
+            <a th:href="@{/match}">What can I cook?</a>
+            <span sec:authorize="isAuthenticated()">
             Hi, <b sec:authentication="name"></b>
             <form th:action="@{/logout}" method="post" style="display:inline; margin-left:14px">
                 <button type="submit">Logout</button>
