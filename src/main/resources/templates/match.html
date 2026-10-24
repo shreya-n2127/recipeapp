@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
@@ -16,7 +16,7 @@
 </head>
 <body>
 <header>
-    <h1><a th:href="@{/}" style="margin:0">Recipe App</a></h1>
+    <h1><a th:href="@{/}" style="margin:0">MealNext</a></h1>
     <div>
         <a th:href="@{/match}">What can I cook?</a>
         <span sec:authorize="isAuthenticated()">
