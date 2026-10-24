@@ -1,4 +1,10 @@
 package com.college.recipeapp.repository;
 
-public class IngredientRepository {
-}
+
+
+import com.college.recipeapp.model.Ingredient;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+    public interface IngredientRepository extends JpaRepository<Ingredient, Long> {
+    }
+

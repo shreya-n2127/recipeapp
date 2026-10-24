@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #fff7ed; display: flex; justify-content: center; padding-top: 80px; }
+        .box { background: white; padding: 30px; border-radius: 10px; width: 300px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 8px; margin: 6px 0 14px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #ea580c; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .msg { color: green; } .err { color: red; }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h2>Login</h2>
+    <p class="err" th:if="${param.error}">Wrong username or password.</p>
+    <p class="msg" th:if="${param.registered}">Registered! Please log in.</p>
+    <form method="post" th:action="@{/login}">
+        <label>Username</label>
+        <input type="text" name="username" required>
+        <label>Password</label>
+        <input type="password" name="password" required>
+        <button type="submit">Login</button>
+    </form>
+    <p>New here? <a th:href="@{/register}">Register</a></p>
+</div>
+</body>
+</html>

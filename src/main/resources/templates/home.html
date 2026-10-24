@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Recipe App</title>
+</head>
+<body style="font-family: Arial, sans-serif; padding: 40px;">
+<h1>Recipe App</h1>
+<div sec:authorize="isAuthenticated()">
+    <p>Logged in as <b sec:authentication="name"></b></p>
+    <form th:action="@{/logout}" method="post"><button type="submit">Logout</button></form>
+</div>
+<div sec:authorize="!isAuthenticated()">
+    <a th:href="@{/login}">Login</a> | <a th:href="@{/register}">Register</a>
+</div>
+<p>Recipes coming in Step 5.</p>
+</body>
+</html>
