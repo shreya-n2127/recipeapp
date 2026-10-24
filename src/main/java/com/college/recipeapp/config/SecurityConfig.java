@@ -1,5 +1,5 @@
 package com.college.recipeapp.config;
-
+import org.springframework.http.HttpMethod;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -20,7 +20,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/recipe/**", "/register", "/login", "/css/**", "/h2-console/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/", "/recipe/**").permitAll()
+                        .requestMatchers("/register", "/login", "/css/**", "/h2-console/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
