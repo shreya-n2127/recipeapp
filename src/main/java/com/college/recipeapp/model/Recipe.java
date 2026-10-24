@@ -14,7 +14,7 @@ import java.util.*;
         private String youtubeId;
         private LocalDateTime createdAt = LocalDateTime.now();
 
-        @ManyToMany
+        @ManyToMany(fetch = FetchType.EAGER)
         @JoinTable(name = "recipe_ingredient",
                 joinColumns = @JoinColumn(name = "recipe_id"),
                 inverseJoinColumns = @JoinColumn(name = "ingredient_id"))

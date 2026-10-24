@@ -4,16 +4,43 @@
 <head>
     <meta charset="UTF-8">
     <title>Recipe App</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
-<body style="font-family: Arial, sans-serif; padding: 40px;">
-<h1>Recipe App</h1>
-<div sec:authorize="isAuthenticated()">
-    <p>Logged in as <b sec:authentication="name"></b></p>
-    <form th:action="@{/logout}" method="post"><button type="submit">Logout</button></form>
-</div>
-<div sec:authorize="!isAuthenticated()">
-    <a th:href="@{/login}">Login</a> | <a th:href="@{/register}">Register</a>
-</div>
-<p>Recipes coming in Step 5.</p>
+<body>
+<header>
+    <h1><a th:href="@{/}" style="margin:0">Recipe App</a></h1>
+    <div>
+        <span sec:authorize="isAuthenticated()">
+            Hi, <b sec:authentication="name"></b>
+            <form th:action="@{/logout}" method="post" style="display:inline; margin-left:14px">
+                <button type="submit">Logout</button>
+            </form>
+        </span>
+        <span sec:authorize="!isAuthenticated()">
+            <a th:href="@{/login}">Login</a> <a th:href="@{/register}">Register</a>
+        </span>
+    </div>
+</header>
+
+<main>
+    <h2>What's New</h2>
+    <div class="grid">
+        <div class="card" th:each="r : ${newRecipes}">
+            <span class="badge">NEW</span>
+            <h3 th:text="${r.title}">Title</h3>
+            <p class="small" th:text="${#temporals.format(r.createdAt, 'dd MMM yyyy')}"></p>
+            <a th:href="@{/recipe/{id}(id=${r.id})}">View recipe &rarr;</a>
+        </div>
+    </div>
+
+    <h2>All Recipes</h2>
+    <div class="grid">
+        <div class="card" th:each="r : ${recipes}">
+            <h3 th:text="${r.title}">Title</h3>
+            <p class="small" th:text="${#lists.size(r.ingredients)} + ' ingredients'"></p>
+            <a th:href="@{/recipe/{id}(id=${r.id})}">View recipe &rarr;</a>
+        </div>
+    </div>
+</main>
 </body>
 </html>

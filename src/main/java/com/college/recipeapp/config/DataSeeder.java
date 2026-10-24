@@ -27,7 +27,11 @@ import java.util.Map;
 
         @Override
         public void run(String... args) {
-            if (ingredientRepo.count() > 0) return;   // already seeded
+            if (ingredientRepo.count() > 0) {
+                System.out.println(">>> Data already exists: " + ingredientRepo.count() + " ingredients, "
+                        + recipeRepo.count() + " recipes.");
+                return;
+            } // already seeded
 
             String[] names = {"Onion", "Tomato", "Potato", "Garlic", "Ginger", "Rice", "Egg",
                     "Milk", "Butter", "Flour", "Cheese", "Chicken", "Paneer", "Pasta", "Green Chilli"};
