@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login - MealNext</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header id="header"></header>
+<div class="box">
+  <div class="tabs">
+    <button class="btn" id="tabLogin">Login</button>
+    <button class="btn light" id="tabSignup">Register</button>
+  </div>
+
+  <div id="usernameRow" style="display:none">
+    <label>Username</label>
+    <input type="text" id="username" maxlength="20">
+  </div>
+  <label>Email</label>
+  <input type="email" id="email">
+  <label>Password (6+ characters)</label>
+  <input type="password" id="password">
+
+  <button class="btn" id="submitBtn">Login</button>
+  <p id="msg"></p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script>
+  let mode = 'login';
+  const $ = id => document.getElementById(id);
+
+  function setMode(m) {
+    mode = m;
+    $('usernameRow').style.display = m === 'signup' ? 'block' : 'none';
+    $('submitBtn').textContent = m === 'signup' ? 'Create account' : 'Login';
+    $('tabLogin').className = 'btn' + (m === 'login' ? '' : ' light');
+    $('tabSignup').className = 'btn' + (m === 'signup' ? '' : ' light');
+    $('msg').textContent = '';
+  }
+  $('tabLogin').onclick = () => setMode('login');
+  $('tabSignup').onclick = () => setMode('signup');
+
+  function show(text, ok) { $('msg').className = ok ? 'ok' : 'err'; $('msg').textContent = text; }
+
+  $('submitBtn').onclick = async () => {
+    const email = $('email').value.trim();
+    const password = $('password').value;
+    if (!email || password.length < 6) { show('Enter an email and a password of 6+ characters.'); return; }
+
+    if (mode === 'signup') {
+      const username = $('username').value.trim();
+      if (username.length < 3) { show('Username needs 3+ characters.'); return; }
+      // The username travels as metadata; a DATABASE TRIGGER copies it into the profiles table.
+      const { data, error } = await sb.auth.signUp({ email, password, options: { data: { username } } });
+      if (error) { show(error.message.includes('Database error') ? 'That username is already taken.' : error.message); return; }
+      if (data.session) { location.href = 'index.html'; }
+      else show('Account created. Check your email to confirm, then login.', true);
+    } else {
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) { show(error.message); return; }
+      location.href = 'index.html';
+    }
+  };
+
+  renderHeader();
+</script>
+</body>
+</html>

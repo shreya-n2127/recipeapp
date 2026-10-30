@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recipe - MealNext</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header id="header"></header>
+<main id="main"><p>Loading...</p></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script>
+  const recipeId = Number(new URLSearchParams(location.search).get('id'));
+  let user = null;
+
+  async function load() {
+    user = await renderHeader();
+    const main = document.getElementById('main');
+
+    const { data: r, error } = await sb.from('recipes')
+      .select('*, recipe_ingredients(ingredients(name))')
+      .eq('id', recipeId).maybeSingle();
+    if (error || !r) { main.innerHTML = '<p>Recipe not found. <a href="index.html">Back</a></p>'; return; }
+
+    document.title = r.title + ' - MealNext';
+    const chips = r.recipe_ingredients.map(x => x.ingredients.name).sort();
+    const needs = (r.needs || '').split(', ').filter(Boolean);
+
+    main.innerHTML = `
+      <a href="index.html">&larr; All recipes</a>
+      <h2>${esc(r.title)}</h2>
+      <p class="small">${esc(r.cook_time)} &middot; ${esc(r.category)}</p>
+
+      ${r.youtube_id
+        ? `<div class="video"><iframe src="https://www.youtube.com/embed/${esc(r.youtube_id)}" allowfullscreen></iframe></div>`
+        : '<p class="small">No video for this recipe yet.</p>'}
+
+      <h3>You will need</h3>
+      <ul class="needs">${needs.map(n => `<li>${esc(n)}</li>`).join('')}</ul>
+
+      <h3>Method</h3>
+      <p class="pre">${esc(r.steps)}</p>
+
+      <h3>Likes: <span id="likeCount">${r.like_count}</span></h3>
+      <div id="likeBox"></div>
+
+      <h3>Comments (<span id="commentCount">${r.comment_count}</span>)</h3>
+      <div id="commentForm"></div>
+      <div id="commentList"></div>`;
+
+    renderLikeButton();
+    renderCommentForm();
+    loadComments();
+  }
+
+  // ---------- Likes ----------
+  async function renderLikeButton() {
+    const box = document.getElementById('likeBox');
+    if (!user) { box.innerHTML = '<p><a href="login.html">Login</a> to like this recipe.</p>'; return; }
+    const { data } = await sb.from('likes').select('recipe_id')
+      .eq('recipe_id', recipeId).eq('user_id', user.id).maybeSingle();
+    const liked = !!data;
+    box.innerHTML = `<button class="btn ${liked ? 'liked' : ''}" id="likeBtn">${liked ? 'Unlike' : 'Like'}</button>`;
+    document.getElementById('likeBtn').onclick = async () => {
+      if (liked) await sb.from('likes').delete().eq('recipe_id', recipeId).eq('user_id', user.id);
+      else await sb.from('likes').insert({ recipe_id: recipeId, user_id: user.id });
+      refreshCounts();
+      renderLikeButton();
+    };
+  }
+
+  // The database TRIGGER keeps like_count / comment_count updated; we just re-read them.
+  async function refreshCounts() {
+    const { data } = await sb.from('recipes').select('like_count,comment_count').eq('id', recipeId).single();
+    if (data) {
+      document.getElementById('likeCount').textContent = data.like_count;
+      document.getElementById('commentCount').textContent = data.comment_count;
+    }
+  }
+
+  // ---------- Comments ----------
+  function renderCommentForm() {
+    const box = document.getElementById('commentForm');
+    if (!user) { box.innerHTML = '<p><a href="login.html">Login</a> to comment.</p>'; return; }
+    box.innerHTML = `
+      <textarea id="commentText" rows="3" maxlength="500" placeholder="Write a comment..."></textarea>
+      <button class="btn" id="commentBtn">Post comment</button>
+      <p class="err" id="commentErr"></p>`;
+    document.getElementById('commentBtn').onclick = async () => {
+      const text = document.getElementById('commentText').value.trim();
+      if (!text) return;
+      const { error } = await sb.from('comments').insert({ recipe_id: recipeId, user_id: user.id, text });
+      if (error) { document.getElementById('commentErr').textContent = error.message; return; }
+      document.getElementById('commentText').value = '';
+      loadComments();
+      refreshCounts();
+    };
+  }
+
+  async function loadComments() {
+    const { data, error } = await sb.from('comments')
+      .select('id,text,created_at,user_id,profiles(username)')
+      .eq('recipe_id', recipeId).order('created_at', { ascending: false });
+    const list = document.getElementById('commentList');
+    if (error) { list.innerHTML = '<p class="err">' + esc(error.message) + '</p>'; return; }
+    list.innerHTML = data.map(c => `
+      <div class="comment">
+        ${user && user.id === c.user_id ? `<button data-id="${c.id}" title="Delete">Delete</button>` : ''}
+        <b>${esc(c.profiles ? c.profiles.username : 'user')}</b>
+        <span class="small">${fmtDate(c.created_at)}</span>
+        <p style="margin:6px 0 0">${esc(c.text)}</p>
+      </div>`).join('');
+    list.querySelectorAll('button[data-id]').forEach(b => {
+      b.onclick = async () => {
+        await sb.from('comments').delete().eq('id', b.dataset.id);   // RLS: only your own can be deleted
+        loadComments();
+        refreshCounts();
+      };
+    });
+  }
+
+  load();
+</script>
+</body>
+</html>

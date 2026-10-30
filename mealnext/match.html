@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>What can I cook? - MealNext</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header id="header"></header>
+<main>
+  <h2>What can I cook?</h2>
+  <p>Tick the ingredients you have at home.</p>
+  <div id="picks"><p>Loading...</p></div>
+  <button class="btn" id="findBtn">Find recipes</button>
+  <p id="msg"></p>
+  <div class="grid" id="results" style="margin-top:20px"></div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script>
+  let recipes = [];
+
+  async function init() {
+    await renderHeader();
+    const { data: ings } = await sb.from('ingredients').select('id,name').order('name');
+    document.getElementById('picks').innerHTML = (ings || []).map(i =>
+      `<label class="pick"><input type="checkbox" value="${i.id}">${esc(i.name)}</label>`).join('');
+
+    const { data } = await sb.from('recipes')
+      .select('id,title,youtube_id,recipe_ingredients(ingredient_id,ingredients(name))');
+    recipes = data || [];
+  }
+
+  // match% = |recipe ∩ selected| / |recipe| * 100
+  function findRecipes() {
+    const selected = new Set(
+      [...document.querySelectorAll('#picks input:checked')].map(c => Number(c.value)));
+    const msg = document.getElementById('msg');
+    const out = document.getElementById('results');
+    out.innerHTML = '';
+    if (selected.size === 0) { msg.textContent = 'Please tick at least one ingredient.'; return; }
+
+    const results = [];
+    for (const r of recipes) {
+      const total = r.recipe_ingredients.length;
+      let have = 0;
+      const missing = [];
+      for (const ri of r.recipe_ingredients) {
+        if (selected.has(ri.ingredient_id)) have++;        // have
+        else missing.push(ri.ingredients.name);            // missing
+      }
+      const percent = total === 0 ? 0 : Math.round(have * 100 / total);
+      if (have > 0) results.push({ r, percent, have, total, missing });
+    }
+    results.sort((a, b) => b.percent - a.percent || a.r.title.localeCompare(b.r.title));
+
+    msg.textContent = results.length ? '' : 'No recipes match those ingredients.';
+    out.innerHTML = results.map(m => `
+      <div class="card">
+        ${thumbHtml(m.r)}
+        <span class="pct">${m.percent}%</span>
+        <div class="bar"><div style="width:${m.percent}%"></div></div>
+        <h3>${esc(m.r.title)}</h3>
+        <p class="small">You have ${m.have} of ${m.total} ingredients</p>
+        <p class="small">${m.missing.length ? 'Missing: ' + esc(m.missing.join(', ')) : 'You have everything!'}</p>
+        <a href="recipe.html?id=${m.r.id}">View recipe &rarr;</a>
+      </div>`).join('');
+  }
+
+  document.getElementById('findBtn').onclick = findRecipes;
+  init();
+</script>
+</body>
+</html>

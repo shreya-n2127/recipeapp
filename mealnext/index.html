@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MealNext</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header id="header"></header>
+<main>
+     <section class="intro">
+    <h2>Welcome to MealNext 🍽️</h2>
+    <p>MealNext helps you decide what to cook next. Browse 30 easy recipes with video guides,
+       like and comment on your favourites, or tick the ingredients you already have
+       and we'll rank the recipes you can make right now.</p>
+    <a class="cook-big" href="match.html">🍳 What can I cook?</a>
+  </section>
+  <h2>What's New</h2>
+  <div class="grid" id="newGrid"><p>Loading...</p></div>
+
+  <h2>All Recipes</h2>
+  <div class="grid" id="allGrid"></div>
+  <p class="err" id="error"></p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script>
+  async function load() {
+    await renderHeader();
+    const { data, error } = await sb.from('recipes')
+      .select('id,title,youtube_id,created_at,like_count,recipe_ingredients(count)')
+      .order('created_at', { ascending: false });
+    if (error) { document.getElementById('error').textContent = 'Could not load recipes: ' + error.message; return; }
+
+    const count = r => (r.recipe_ingredients[0] ? r.recipe_ingredients[0].count : 0);
+
+    document.getElementById('newGrid').innerHTML = data.slice(0, 6).map(r => `
+      <div class="card">
+        ${thumbHtml(r)}
+        <span class="badge">NEW</span>
+        <h3>${esc(r.title)}</h3>
+        <p class="small">${fmtDate(r.created_at)} &middot; ${r.like_count} likes</p>
+        <a href="recipe.html?id=${r.id}">View recipe &rarr;</a>
+      </div>`).join('');
+
+    const all = [...data].sort((a, b) => a.id - b.id);
+    document.getElementById('allGrid').innerHTML = all.map(r => `
+      <div class="card">
+        ${thumbHtml(r)}
+        <h3>${esc(r.title)}</h3>
+        <p class="small">${count(r)} main ingredients &middot; ${r.like_count} likes</p>
+        <a href="recipe.html?id=${r.id}">View recipe &rarr;</a>
+      </div>`).join('');
+  }
+  load();
+</script>
+</body>
+</html>
